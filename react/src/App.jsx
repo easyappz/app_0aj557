@@ -28,7 +28,7 @@ function App() {
       }
 
       const token = window.localStorage.getItem('authToken');
-      if (!token) {
+      if (!token || currentUser) {
         return;
       }
 
@@ -44,7 +44,7 @@ function App() {
     }
 
     initAuth();
-  }, []);
+  }, [currentUser]);
 
   const handleAuthSuccess = (member) => {
     setCurrentUser(member);
@@ -76,9 +76,11 @@ function App() {
               <Link className="app-nav__link" to="/">
                 Чат
               </Link>
-              <Link className="app-nav__link" to="/profile">
-                Профиль
-              </Link>
+              {currentUser && (
+                <Link className="app-nav__link" to="/profile">
+                  Профиль
+                </Link>
+              )}
             </nav>
             <div className="app-header__user-area">
               {currentUser ? (
@@ -120,7 +122,12 @@ function App() {
             />
             <Route
               path="/profile"
-              element={<ProfilePage currentUser={currentUser} />}
+              element={
+                <ProfilePage
+                  currentUser={currentUser}
+                  onUserUpdate={handleAuthSuccess}
+                />
+              }
             />
           </Routes>
         </main>
