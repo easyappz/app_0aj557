@@ -31,6 +31,18 @@ class Member(models.Model):
         """Validate a raw password against the stored hash."""
         return django_check_password(raw_password, self.password)
 
+    @property
+    def is_authenticated(self) -> bool:
+        """Compatibility property for DRF and Django authentication system."""
+
+        return True
+
+    @property
+    def is_anonymous(self) -> bool:
+        """Compatibility property for DRF and Django authentication system."""
+
+        return False
+
 
 class Token(models.Model):
     """Simple token model used for authenticating API requests for a Member."""

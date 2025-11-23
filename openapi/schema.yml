@@ -21,6 +21,84 @@ paths:
               schema:
                 $ref: '#/components/schemas/Message'
           description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: Register a new member and obtain an authentication token.
+      tags:
+      - auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+      responses:
+        '201':
+          description: Member registered successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          description: Validation error.
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: Log in an existing member and obtain an authentication token.
+      tags:
+      - auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          description: Validation error.
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: Log out the current authenticated member by invalidating their tokens.
+      tags:
+      - auth
+      security:
+      - TokenAuth: []
+      responses:
+        '200':
+          description: Logout successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailMessage'
+        '401':
+          description: Authentication credentials were not provided or are invalid.
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      description: Get the profile of the current authenticated member.
+      tags:
+      - auth
+      security:
+      - TokenAuth: []
+      responses:
+        '200':
+          description: Current member profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberProfile'
+        '401':
+          description: Authentication credentials were not provided or are invalid.
 components:
   schemas:
     Message:
@@ -36,6 +114,63 @@ components:
       required:
       - message
       - timestamp
+    MemberProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          maxLength: 150
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - username
+      - created_at
+    RegistrationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          format: password
+      required:
+      - username
+      - password
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+      required:
+      - username
+      - password
+    AuthTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        member:
+          $ref: '#/components/schemas/MemberProfile'
+      required:
+      - token
+      - member
+    DetailMessage:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
   securitySchemes:
     basicAuth:
       type: http
@@ -44,3 +179,7 @@ components:
       type: apiKey
       in: cookie
       name: sessionid
+    TokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
