@@ -3,13 +3,18 @@ from __future__ import annotations
 import secrets
 
 from django.utils import timezone
-from rest_framework import permissions, serializers, status
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
 
-from .models import Token
-from .serializers import LoginSerializer, MemberProfileSerializer, RegistrationSerializer
+from .models import Message, Token
+from .serializers import (
+    LoginSerializer,
+    MemberProfileSerializer,
+    MessageSerializer,
+    RegistrationSerializer,
+)
 
 
 class HelloMessageSerializer(serializers.Serializer):
@@ -114,3 +119,15 @@ class CurrentMemberView(APIView):
     def get(self, request):
         serializer = MemberProfileSerializer(request.user)
         return Response(serializer.data)
+
+
+class MessageListCreateView(generics.ListCreateAPIView):
+    """List existing group chat messages and allow sending new ones."""
+
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Message.objects.all().order_by("created_at")
+
+    def perform_create(self, serializer):
+        # Sender is always taken from the authenticated user
+        serializer.save(sender=self.request.user)
