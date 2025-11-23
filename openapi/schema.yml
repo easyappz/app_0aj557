@@ -7,6 +7,7 @@ paths:
   /api/hello/:
     get:
       operationId: api_hello_retrieve
+      summary: Hello message
       description: Get a hello world message
       tags:
       - api
@@ -19,11 +20,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
+                $ref: '#/components/schemas/HelloMessage'
           description: ''
   /api/auth/register/:
     post:
       operationId: auth_register_create
+      summary: User registration
       description: Register a new member and obtain an authentication token.
       tags:
       - auth
@@ -43,9 +45,14 @@ paths:
                 $ref: '#/components/schemas/AuthTokenResponse'
         '400':
           description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/auth/login/:
     post:
       operationId: auth_login_create
+      summary: Login
       description: Log in an existing member and obtain an authentication token.
       tags:
       - auth
@@ -65,9 +72,20 @@ paths:
                 $ref: '#/components/schemas/AuthTokenResponse'
         '400':
           description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid username or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/auth/logout/:
     post:
       operationId: auth_logout_create
+      summary: Logout current member
       description: Log out the current authenticated member by invalidating their tokens.
       tags:
       - auth
@@ -82,9 +100,14 @@ paths:
                 $ref: '#/components/schemas/DetailMessage'
         '401':
           description: Authentication credentials were not provided or are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/auth/me/:
     get:
       operationId: auth_me_retrieve
+      summary: Get current member profile
       description: Get the profile of the current authenticated member.
       tags:
       - auth
@@ -96,12 +119,73 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MemberProfile'
+                $ref: '#/components/schemas/Member'
         '401':
           description: Authentication credentials were not provided or are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/chat/messages/:
+    get:
+      operationId: chat_messages_list
+      summary: Get chat message history
+      description: Retrieve the history of messages in the group chat.
+      tags:
+      - chat
+      security:
+      - TokenAuth: []
+      responses:
+        '200':
+          description: List of chat messages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '401':
+          description: Authentication credentials were not provided or are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: chat_messages_create
+      summary: Send a new chat message
+      description: Send a new message to the group chat.
+      tags:
+      - chat
+      security:
+      - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageCreateRequest'
+      responses:
+        '201':
+          description: Message created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication credentials were not provided or are invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
-    Message:
+    HelloMessage:
       type: object
       properties:
         message:
@@ -114,7 +198,7 @@ components:
       required:
       - message
       - timestamp
-    MemberProfile:
+    Member:
       type: object
       properties:
         id:
@@ -131,6 +215,29 @@ components:
       - id
       - username
       - created_at
+    MemberProfile:
+      allOf:
+      - $ref: '#/components/schemas/Member'
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        sender_username:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - text
+      - created_at
+      - sender_username
     RegistrationRequest:
       type: object
       properties:
@@ -160,7 +267,7 @@ components:
         token:
           type: string
         member:
-          $ref: '#/components/schemas/MemberProfile'
+          $ref: '#/components/schemas/Member'
       required:
       - token
       - member
@@ -171,6 +278,16 @@ components:
           type: string
       required:
       - detail
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/DetailMessage'
+    ChatMessageCreateRequest:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+      - text
   securitySchemes:
     basicAuth:
       type: http
@@ -183,3 +300,4 @@ components:
       type: apiKey
       in: header
       name: Authorization
+      description: Use 'Token <key>' format in the Authorization header.
